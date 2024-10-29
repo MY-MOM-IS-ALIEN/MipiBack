@@ -1,0 +1,138 @@
+* {
+	box-sizing: border-box;
+}
+html {
+	height: 100%;
+}
+body {
+	margin: 0;
+	height: 100vh;
+	background-color: #ffffff;
+}
+a {
+	text-decoration: none;
+	color: white;
+}
+div.link-area .link1 {
+	font-size: 10;
+	color: blue;
+}
+.wrap {
+	margin:auto;
+    overflow: auto;
+    display: flex;
+    flex-direction: column; /* 세로 방향으로 배치 */
+}
+/**************************************/
+.name-area{
+	border: 1px solid;
+	border-color: #006BB9;
+}
+.approve-area tr td {
+	border: 1px solid;
+	border-color: black;
+}
+.logout-btn {
+	width:100px;
+	height: 30px;
+	background-color : #006BB9;
+	color: #fff;
+	border-radius: 4px;
+	border-style: none;
+	margin-left: 10px;
+}
+.write-input {
+	position: relative;
+	height: auto;
+	box-sizing: border-box;
+	padding: 10px;
+	font-size: 16px;
+	display: block;
+	width: 100%;
+	line-height: 1.5;
+	color: #555;
+	background-color: #fff;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	border-color : #006BB9;
+	box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
+	transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+}
+.content {
+	padding: 15px 30px;
+	margin: 0 auto;
+	width: 1000px;
+	flex: 1;
+}
+.loginBox{
+	height : 50%;
+	margin-top : 50px;
+	border: 3px solid #ccc; /* 윤곽선 스타일 추가 */
+	padding: 50px; /* 내부 여백 추가 */
+    margin-bottom: 50px; /*아래 여백 추가 */
+    border-radius : 10px;
+    border-color: #006BB9;
+    background-color:#006BB9; 
+}
+.loginBox h5 {
+	color: #ffffff;
+}
+.form-header {
+	margin-top: 30px;
+	margin-bottom: 30px;
+	font-size: 2em;
+	text-align: center;
+	font-size: 1.8em;
+}
+.btn-area {
+	width: 300px;
+	margin: 0px auto;
+	/* margin-top : 100px; */
+	margin-bottom: 100px;
+	text-align: center;
+}
+.btn-write {
+	padding: 10px 16px;
+	line-height: 1.5;
+	border-radius: 6px;
+	color: #fff;
+	background-color: #1877F2;
+	margin-top: 10px;
+}
+.btn-write[type="button"] {
+	background-color: black;
+}
+#loginbtn{
+	width: 200px;
+	height : 80px;
+	font-size: 30px;
+	
+}
+#backbtn{
+	font-size: 10px;
+	width: 100px;
+	height : 40px;
+}
+
+/*
+ * Responsive css
+ */
+@media only screen and (max-width: 768px) {
+	.content {
+		max-width: 100%;
+	}
+	.btn-area {
+		width: 100%;
+	}
+	.detail {
+		padding: 15px;
+	}
+	.detail-title {
+		width: 100%;
+		margin-bottom: 5px;
+		font-size: 1.4em;
+	}
+	.detail-content {
+		font-size: 1.2em;
+	}
+}

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xmlns:context="http://www.springframework.org/schema/context"
+   xmlns:mybatis-spring="http://mybatis.org/schema/mybatis-spring"
+   xmlns:tx="http://www.springframework.org/schema/tx"
+   xsi:schemaLocation="http://mybatis.org/schema/mybatis-spring http://mybatis.org/schema/mybatis-spring-1.2.xsd
+      http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
+      http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd
+      http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.3.xsd">
+   
+      <!-- Root Context: defines shared resources visible to all other web components -->
+    <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+    <property name="driverClassName" value="oracle.jdbc.driver.OracleDriver"/>
+    <property name="url" value="jdbc:oracle:thin:@125.133.48.26:1521:xe?useUnicode=true&amp;characterEncoding=UTF-8"/>
+    <property name="username" value="giantstudy"/>
+    <property name="password" value="gs123"/>
+</bean>
+   
+   <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+  	 <property name="configLocation" value="classpath:mapper/mybatis-config.xml"/>
+    <property name="dataSource" ref="dataSource"/>
+    <property name="typeAliasesPackage" value="com.com.com.erp.dto"/>
+	<!-- <property name="mapperLocations" value="classpath:mapper/*.xml"/> -->
+</bean>
+   
+   <bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate" destroy-method="clearCache">
+    <constructor-arg name="sqlSessionFactory" ref="sqlSessionFactory"/>
+</bean>
+   
+   <!-- 트랜잭션 처리 객체 설정 : 트랜잭션을 어노테이션으로 관리 하겠다 -->
+   <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+      <property name="dataSource" ref="dataSource"></property>
+   </bean>  
+   
+   <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+    <!-- 최대 파일 업로드 크기 설정 -->
+    <property name="maxUploadSize" value="10485760"/> <!-- 10MB -->
+	</bean>
+   
+   <!-- @Repository 패키지 스캔(우리가 만든 빈 추가하기 위해)  => DAO패키지와 Service패키지를 자동 스캔하여 bean을 생성할 수 있도록-->
+   <context:component-scan base-package="com.com.com.erp"></context:component-scan>
+   <context:component-scan base-package="com.com.com.erp.dao"></context:component-scan>
+   <context:component-scan base-package="com.com.com.erp.service"></context:component-scan>
+   <context:component-scan base-package="com.com.com.erp.dto"></context:component-scan>
+      
+   <!-- 이메일 인증 관련 빈 등록 -->
+   <bean id="mailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
+      <property name="host" value="smtp.gmail.com" />
+      <property name="port" value="587" />
+      <property name="username" value="alsdn547188@gmail.com" />
+      <property name="password" value="ozecxnkeghdekxks"/>
+      <property name="javaMailProperties">
+   <props>
+      <prop key="mail.transport.protocol">smtp</prop>
+      <prop key="mail.smtp.auth">true</prop>
+      <prop key="mail.smtp.starttls.enable">true</prop>
+      <prop key="mail.debug">true</prop>
+      <prop key="mail.smtp.ssl.trust">smtp.gmail.com</prop>
+      <prop key="mail.smtp.ssl.protocols">TLSv1.2</prop>
+   </props>
+</property>
+   </bean>   
+      
+</beans>

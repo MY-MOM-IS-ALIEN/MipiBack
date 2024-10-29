@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.com.com.erp.dao.ProxyDao">
+
+<resultMap type="com.com.com.erp.dto.ProxyDto" id="ProxyDto">
+		<result column="PROXY_ID" property="proxyId" />
+		<result column="PROXY_NAME" property="proxyName" />
+		<result column="APPER_ID" property="apperId" />
+		<result column="MEMBER_NAME" property="apperName" />
+		<result column="PROXY_DATE" property="proxyDate" />
+		<result column="PROXY_RANK" property="proxyRank" />
+	</resultMap>
+
+  	 <update id="updateProxy" parameterType="com.com.com.erp.dto.ProxyDto">
+    update A_PROXY
+    set
+        	<choose>
+        	<when test="proxyRank == '003' || proxyRank == '004'">
+        	APPER_ID = #{apperId},
+            PROXY_DATE = sysdate,
+            PROXY_RANK = #{proxyRank, jdbcType=VARCHAR}
+        	</when>
+        	<otherwise>
+            APPER_ID = null,
+            PROXY_DATE = null,
+            PROXY_RANK = #{proxyRank, jdbcType=VARCHAR}
+            </otherwise>
+            </choose>
+    where PROXY_ID = #{proxyId}
+</update>
+  	
+  	<select id="checkProxy" parameterType="String" resultMap="ProxyDto">
+  		select 
+  		PROXY_ID,
+  		PROXY_NAME,
+  		APPER_ID,
+  		(select MEMBER_NAME from A_MEMBER where A_MEMBER.MEMBER_ID = A_PROXY.APPER_ID) as MEMBER_NAME,
+  		PROXY_DATE,
+  		PROXY_RANK
+  		from A_PROXY
+  		where PROXY_ID = #{memberId}
+  	</select>
+</mapper>

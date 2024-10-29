@@ -1,0 +1,358 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.com.com.erp.dao.BoardDao">
+
+	<resultMap type="com.com.com.erp.dto.BoardDto" id="boardDto">
+		<result column="SEQ" property="seq" />
+		<result column="MEMBER_ID" property="memberId" />
+		<result column="MEMBER_NAME" property="memberName" />
+		<result column="BOARD_TITLE" property="boardTitle" />
+		<result column="BOARD_CONTENT" property="boardContent" />
+		<result column="REG_DATE" property="regDate" />
+		<result column="APPR_DATE" property="apprDate" />
+		<result column="APPROVER" property="approver" />
+		<result column="APPR_STAT" property="apprStat" />
+	</resultMap>
+	
+	<resultMap type="com.com.com.erp.dto.HistoryDto" id="HistoryDto">
+		<result column="HI_NUM" property="hiNum" />
+		<result column="SIGN_DATE" property="signDate" />
+		<result column="MEMBER_NAME" property="memberName" />
+		<result column="APPROVAL" property="approval" />
+		<result column="SIGN_STATUS" property="signStatus" />
+		<result column="HI_NO" property="hiNo" />
+	</resultMap>
+	
+	<resultMap type="com.com.com.erp.dto.FileDto" id="FileDto">
+		<result column="FILE_SEQ" property="fileSeq" />
+		<result column="SAVE_NAME" property="saveName" />
+	</resultMap>
+	
+	<resultMap id="NBoard" type="com.com.com.erp.dto.NBoard">
+      <result property="seq" column="seq" />
+      <result property="mem_id" column="mem_id" />
+      <result property="mem_name" column="mem_name" />
+      <result property="board_subject" column="board_subject" />
+      <result property="board_content" column="board_content" />
+      <result property="reg_date" column="reg_date" />
+      <result property="upt_date" column="upt_date" />
+      <result property="view_cnt" column="view_cnt" />
+      <result property="useyn" column="useyn" />
+      
+   </resultMap>
+   
+   <select id="NboardList" resultMap="NBoard">
+      SELECT seq,
+      mem_id,
+      mem_name,
+      board_subject,
+      board_content, 
+      reg_date, 
+      upt_date, 
+      view_cnt,
+      useyn
+      FROM board_study
+      ORDER BY
+      SEQ DESC
+   </select>
+
+<!-- 검색 쿼리 -->
+   <select id="searchBoard" parameterType="map" resultMap="NBoard">
+    SELECT seq,
+           mem_id, 
+           mem_name, 
+           board_subject, 
+           board_content, 
+           reg_date,
+           upt_date, 
+           view_cnt, 
+           useyn
+    FROM board_study
+    WHERE 1=1
+    <if test="searchType != null and searchType != ''">
+        <choose>
+            <when test="searchType == 'mem_name'">
+                AND mem_name LIKE '%' || #{searchKeyword} || '%'
+            </when>
+            <when test="searchType == 'board_subject'">
+                AND board_subject LIKE '%' || #{searchKeyword} || '%'
+            </when>
+            <when test="searchType == 'subject_content'">
+                AND (board_subject LIKE '%' || #{searchKeyword} || '%'
+                     OR board_content LIKE '%' || #{searchKeyword} || '%')
+            </when>
+        </choose>
+    </if>
+    <if test="startDate != null and startDate != ''">
+        AND reg_date &gt;= TO_DATE(#{startDate}, 'YYYYMMDD')
+    </if>
+    <if test="endDate != null and endDate != ''">
+        AND reg_date &gt;= TO_DATE(#{endDate}, 'YYYYMMDD')
+    </if>
+    ORDER BY seq DESC
+</select>
+
+   
+	
+
+	<select id="checkSeq" resultType="int">
+		SELECT NVL(MAX(seq), 0) FROM
+		A_BOARD
+	</select>
+	
+	<select id="fileSeqCheck" resultType="int">
+		SELECT NVL(MAX(file_seq), 0) FROM
+		FILE_STUDY_TABLE
+	</select>
+
+	<select id="checkHiNum" parameterType="int" resultType="int">
+		SELECT NVL(MAX(HI_NUM), 0)
+		FROM A_HiSTORY
+		where HI_NO = #{seq}
+	</select>
+
+	<insert id="insert" parameterType="com.com.com.erp.dto.BoardDto">
+		INSERT INTO A_BOARD (
+		SEQ,
+		MEMBER_ID,
+		BOARD_TITLE,
+		BOARD_CONTENT,
+		REG_DATE,
+		APPR_DATE,
+		APPROVER,
+		APPR_STAT
+		) VALUES (
+		#{seq},
+		#{memberId},
+		#{boardTitle},
+		#{boardContent},
+		sysdate,
+		null,
+		null,
+		#{apprStat}
+		)
+	</insert>
+
+	<select id="getBoardList" parameterType="int"
+		resultMap="boardDto">
+		select
+		SEQ,
+		MEMBER_ID,
+		(select MEMBER_NAME from A_MEMBER where A_MEMBER.MEMBER_ID = A_BOARD.MEMBER_ID) as MEMBER_NAME,
+		BOARD_TITLE,
+		BOARD_CONTENT,
+		REG_DATE,
+		APPR_DATE,
+		APPROVER,
+		APPR_STAT
+		from A_BOARD
+		where SEQ = #{seq}
+		order by SEQ asc
+	</select>
+	
+	<select id="selectBoardList" parameterType="com.com.com.erp.dto.MemberDto" resultMap="boardDto">
+    select
+        SEQ,
+        MEMBER_ID,
+        (select MEMBER_NAME from A_MEMBER where A_MEMBER.MEMBER_ID = A_BOARD.MEMBER_ID) as MEMBER_NAME,
+        BOARD_TITLE,
+        BOARD_CONTENT,
+        REG_DATE,
+        APPR_DATE,
+        (select MEMBER_NAME from A_MEMBER where A_MEMBER.MEMBER_ID = A_BOARD.APPROVER) as APPROVER,
+        APPR_STAT
+    from A_BOARD
+    <where>
+        <if test="memberRank == '001' || memberRank == '002'">
+            MEMBER_ID = #{memberId}
+        </if>
+		<if test="memberRank == '003'">
+		(
+		APPR_STAT = '02'
+<!-- 		or MEMBER_ID = #{memberId} -->
+		or (APPR_STAT = '03' and APPROVER = #{memberId})
+		or (APPR_STAT = '03' and MEMBER_ID = #{memberId})
+		or (APPR_STAT = '05' and MEMBER_ID = #{memberId})
+		or (APPR_STAT = '01' and MEMBER_ID = #{memberId})
+		or (APPR_STAT = '05' and APPROVER = #{memberId})
+		)
+   		 <if test="memberRank == '003' and (firstRank == '001' || firstRank == '002')">
+   		 	  or APPROVER LIKE '%' || #{memberName} || '%'
+		      and TO_DATE(REG_DATE, 'YYYY-MM-DD') >= TO_DATE(SYSDATE, 'YYYY-MM-DD')
+   		 </if>
+		</if>
+        <if test="memberRank == '004'">
+        
+<!--         where 1=1  -->
+<!--         and mem_id = {#id} -->
+<!--         or stat = 03, 04,  -->
+<!--         or (05 면서 부장이 처리했을땜만) -->
+            (
+    			(APPR_STAT = '01' OR APPR_STAT = '04') AND MEMBER_ID = #{memberId}
+    			OR APPR_STAT in( '03', '04') 
+    			OR (APPR_STAT = '05' AND APPROVER = #{memberId})
+    	)
+    	<if test="memberRank == '004' and (firstRank == '002' || firstRank == '003')">
+		      AND TO_DATE(REG_DATE, 'YYYY-MM-DD') >= (
+	   	     SELECT TO_DATE(PROXY_DATE, 'YYYY-MM-DD')
+   		     FROM A_PROXY
+     		   WHERE A_PROXY.PROXY_ID = #{memberId}
+  				  )
+   		 </if>
+        </if>
+    </where>
+    order by SEQ desc
+</select>
+	
+	<select id="saveCheck" parameterType="int" resultType="int">
+		select 
+		count(SEQ)
+		from A_BOARD
+		where SEQ = #{seq}
+	</select>
+	
+	<update id="updateStat" parameterType="com.com.com.erp.dto.BoardDto">
+    <!-- update 구문 시작 -->
+    UPDATE A_BOARD
+    SET
+        APPR_DATE =
+        <choose>
+            <when test="memberRank == '001' or memberRank == '002'">
+                NULL
+            </when>
+            <otherwise>
+                sysdate
+            </otherwise>
+        </choose>,
+        APPROVER =
+        <choose>
+            <when test="memberRank == '001' or memberRank == '002'">
+                NULL
+            </when>
+            <otherwise>
+                #{approver}
+            </otherwise>
+        </choose>,
+        APPR_STAT = #{apprStat}
+    WHERE SEQ = #{seq}
+</update>
+	
+	<update id="updateBoard" parameterType="com.com.com.erp.dto.BoardDto">
+    update A_BOARD
+    set 
+        BOARD_TITLE = #{boardTitle, jdbcType=VARCHAR},
+        BOARD_CONTENT = #{boardContent, jdbcType=VARCHAR},
+        REG_DATE = sysdate,
+        APPR_DATE = case 
+            when (select MEMBER_RANK from A_MEMBER where MEMBER_ID = #{memberId, jdbcType=VARCHAR}) in ('001', '002') then null
+            else sysdate
+        end,
+        APPROVER = case 
+            when (select MEMBER_RANK from A_MEMBER where MEMBER_ID = #{memberId, jdbcType=VARCHAR}) in ('001', '002') then null
+            else #{memberName, jdbcType=VARCHAR}
+        end,
+        APPR_STAT = #{apprStat, jdbcType=VARCHAR}
+    where SEQ = #{seq, jdbcType=INTEGER}
+</update>
+	<update id="updateStatProxy" parameterType="com.com.com.erp.dto.BoardDto">
+		update A_BOARD
+    set 
+        APPR_DATE = sysdate,
+        APPROVER = #{approver},
+        APPR_STAT = #{apprStat}
+    where SEQ = #{seq}
+	</update>
+
+	<select id="search" parameterType="com.com.com.erp.dto.SearchDto" resultMap="boardDto">
+    SELECT b.SEQ, b.MEMBER_ID, b.BOARD_TITLE, b.BOARD_CONTENT, 
+           b.REG_DATE, b.APPR_DATE, b.APPROVER, b.APPR_STAT, m.MEMBER_NAME
+    FROM A_Board b
+    INNER JOIN A_MEMBER m ON b.MEMBER_ID = m.MEMBER_ID
+    WHERE 1=1
+    <if test="category != null and category != ''">
+        <choose>
+            <when test="category == 'boardTitle'">
+                AND b.BOARD_TITLE LIKE '%' || #{keyword} || '%'
+            </when>              
+            <when test="category == 'memberName'">
+                AND b.MEMBER_ID IN (SELECT MEMBER_ID FROM A_MEMBER WHERE MEMBER_NAME LIKE '%' || #{keyword} || '%')
+            </when>
+            <when test="category == 'boardContent'">
+                AND (b.BOARD_TITLE LIKE '%' || #{keyword} || '%'
+                     OR b.BOARD_CONTENT LIKE '%' || #{keyword} || '%')
+            </when>
+        </choose>
+    </if>
+    <if test="startDate != null and startDate != ''">
+        AND b.REG_DATE &gt;= TO_DATE(#{startDate}, 'YYYY-MM-DD')
+    </if>
+    <if test="endDate != null and endDate != ''">
+        AND b.REG_DATE &lt;= TO_DATE(#{endDate}, 'YYYY-MM-DD') + 1
+    </if>
+    <if test="apprStat != null and apprStat != ''">
+        AND b.APPR_STAT = #{apprStat}
+    </if>
+    <if test="memberRank == '001' || memberRank == '002'">
+    AND b.MEMBER_ID = #{memberId}
+</if>
+<if test="memberRank == '003'">
+    AND (
+                APPR_STAT = '02'
+                or (APPR_STAT = '03' and APPROVER = #{memberName})
+                or (APPR_STAT = '03' and MEMBER_ID = #{memberId})
+                or (APPR_STAT = '05' and MEMBER_ID = #{memberId})
+                or (APPR_STAT = '01' and MEMBER_ID = #{memberId})
+                or (APPR_STAT = '05' and APPROVER = #{memberName})
+            )
+</if>
+<if test="memberRank == '004'">
+    AND (
+    	(b.APPR_STAT = '01' OR b.APPR_STAT = '04') AND b.MEMBER_ID = #{memberId} 
+    	OR b.APPR_STAT = '03' 
+    	OR b.APPR_STAT = '04' 
+    	OR (b.APPR_STAT = '05' AND b.APPROVER = #{memberName})
+    	)
+</if>
+    ORDER BY b.SEQ DESC
+</select>
+
+	<insert id="insertFile" parameterType="fileDto">
+		INSERT INTO FILE_STUDY_TABLE (
+		FILE_SEQ,
+		REAL_NAME,
+		SAVE_NAME,
+		REG_DATE,
+		SAVE_PATH,
+		LIST_SEQ
+		) VALUES (
+		#{fileSeq},
+		#{realName},
+		#{saveName},
+		sysdate,
+		#{savePath},
+		#{listSeq}
+		)
+	</insert>
+
+	<select id="getImageList" parameterType="int"
+		resultMap="FileDto">
+		select
+		FILE_SEQ,
+		SAVE_NAME
+		from FILE_STUDY_TABLE
+		where LIST_SEQ = #{seq}
+		order by FILE_SEQ asc
+	</select>
+	
+	<select id="getReactList" resultType="Map">
+		select 
+		ID,
+		DESCRIPTION,
+		FOOD,
+		CODE,
+		GOOD,
+		PRICE
+		from REACT_EXAM_DATA
+	</select>
+</mapper>

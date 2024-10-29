@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="com.com.com.erp.dao.HistoryDao">
+    <resultMap type="com.com.com.erp.dto.HistoryDto" id="historyDto">
+        <result column="HI_NUM" property="hiNum"/>
+        <result column="SIGN_DATE" property="signDate"/>
+        <result column="APPROVAL" property="approval"/>
+        <result column="MEMBER_NAME" property="memberName" />
+        <result column="SIGN_STATUS" property="signStatus"/>
+        <result column="HI_NO" property="hiNo"/>
+    </resultMap>
+    
+    <insert id="insertHistory" parameterType="com.com.com.erp.dto.HistoryDto">
+        INSERT INTO A_HISTORY (
+            HI_NUM,
+            SIGN_DATE,
+            APPROVAL,
+            SIGN_STATUS,
+            HI_NO
+        ) VALUES (
+            #{hiNum},
+            sysdate,
+            #{approval},
+            #{signStatus},
+            #{hiNo}
+        )
+    </insert>
+    
+    <select id="getHistoryList" resultMap="historyDto" parameterType="int">
+	select
+	HI_NUM,
+	SIGN_DATE,
+	APPROVAL,
+	(select MEMBER_NAME from A_MEMBER where
+	A_MEMBER.MEMBER_ID = A_HISTORY.APPROVAL) as MEMBER_NAME,
+	SIGN_STATUS,
+	HI_NO
+	from A_HISTORY
+	where HI_NO = #{seq}
+	order by HI_NUM asc
+    </select>
+    
+    
+</mapper>

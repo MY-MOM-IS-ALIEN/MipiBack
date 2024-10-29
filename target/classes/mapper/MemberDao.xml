@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.com.com.erp.dao.MemberDao">
+
+	<resultMap id="memberResult"
+		type="com.com.com.erp.dto.MemberDto">
+		<result column="TB_MEMBER_ID" property="memberId" />
+		<result column="TB_MEMBER_NAME" property="memberName" />
+		<result column="TB_MEMBER_PASSWORD" property="password" />
+		<result column="TB_ADDR_ZIPCODE" property="addrZipcode" />
+		<result column="TB_ADDR1" property="address1" />
+		<result column="TB_ADDR2" property="address2" />
+	</resultMap>
+
+	<parameterMap type="com.com.com.erp.dto.MemberDto"
+		id="memberParam">
+		<parameter property="memberId" />
+		<parameter property="password" />
+		<parameter property="memberName" />
+		<parameter property="memberRank" />
+	</parameterMap>
+	
+	<insert id="apiInsert" parameterType="com.com.com.erp.dto.ApiUserDto">
+    INSERT INTO T_MEMBER_STUDY (
+        TB_CHAR_SEQ,
+        TB_MEMBER_ID,
+        TB_MEMBER_PASSWORD,
+        TB_MEMBER_NAME,
+        TB_ADDR_ZIPCODE,
+        TB_ADDR1,
+        TB_ADDR2,
+        TB_EMAIL,
+        TB_PHONE_NUMBER
+    )
+    VALUES (
+        (SELECT 
+            'TM' || LPAD(TO_CHAR(TO_NUMBER(SUBSTR(COALESCE(MAX(TB_CHAR_SEQ), 'TM000'), 3)) + 1), 3, '0')
+         FROM 
+            T_MEMBER_STUDY),
+        #{apiId},
+        #{apiPass},
+        #{apiName},
+        #{apiAddress1},
+        #{apiAddress2},
+        #{apiAddress3},
+        #{apiEmail1},
+        #{apiPhone}
+    )
+</insert>
+	
+	<select id="getCartList" parameterType="String" resultType="map">
+    SELECT
+        ID,
+        CART_ID,
+        CART_TITLE,
+        CART_SIZE,
+        CART_PRICE,
+        CART_DOW,
+        CART_COUNT,
+        (SELECT BOARD_IMG
+         FROM AMW_REACT_BOARD b
+         WHERE b.BOARD_TITLE = c.CART_TITLE
+         AND ROWNUM = 1) AS CART_IMG
+    FROM
+        AMW_REACT_CART c
+</select>
+	
+	<update id="updateCart" parameterType="map">
+    UPDATE AMW_REACT_CART
+    SET CART_COUNT = #{CART_COUNT} , CART_PRICE = #{CART_PRICE}
+    WHERE CART_ID = #{CART_ID}
+    AND ID = #{ID}
+	</update>
+	
+	<delete id="deleteCart" parameterType="map">
+		DELETE FROM AMW_REACT_CART
+		WHERE CART_ID = #{CART_ID}
+	</delete>
+
+	<insert id="insertCart" parameterType="map">
+	INSERT INTO AMW_REACT_CART (
+    ID,
+    CART_ID,
+    CART_TITLE,
+    CART_SIZE,
+    CART_PRICE,
+    CART_DOW,
+    CART_COUNT
+)
+VALUES (
+    #{MEMBER_ID},
+    (SELECT NVL(MAX(CART_ID), 0) + 1 FROM AMW_REACT_CART),
+    #{CART_TITLE},
+    #{CART_SIZE},
+    #{CART_PRICE},
+    #{CART_DOW},
+    #{CART_COUNT}
+)
+	</insert>
+
+	<select id="getPizzaList" resultType="map">
+		select
+		ID,
+		BOARD_TITLE,
+		BOARD_CONTENT,
+		BOARD_INFO,
+		BOARD_SIZE1,
+		BOARD_SIZE2,
+		BOARD_M_PRICE,
+		BOARD_L_PRICE,
+		BOARD_IMG
+		from AMW_REACT_BOARD
+	</select>
+
+	<select id="nextId" resultType="int">
+		select count(ID)+1 from
+		AMW_REACT_MEMBER
+	</select>
+
+	<insert id="joinProc" parameterType="map">
+		INSERT INTO AMW_REACT_MEMBER (
+		ID,
+		MEMBER_ID,
+		MEMBER_PASSWORD,
+		MEMBER_NAME,
+		MEMBER_ADRESS,
+		MEMBER_PHONE
+		) VALUES (
+		#{id, jdbcType=INTEGER},
+		#{custId, jdbcType=VARCHAR},
+		#{password, jdbcType=VARCHAR},
+		#{name, jdbcType=VARCHAR},
+		#{adress, jdbcType=VARCHAR},
+		#{phone, jdbcType=VARCHAR}
+		)
+	</insert>
+
+	<select id="reactLoginProc" parameterType="map" resultType="map">
+		select
+		MEMBER_ID,
+		MEMBER_PASSWORD,
+		MEMBER_NAME,
+		MEMBER_ADRESS,
+		MEMBER_PHONE
+		from AMW_REACT_MEMBER
+		where MEMBER_ID = #{custId, jdbcType=VARCHAR}
+	</select>
+
+	<select id="idCheck" resultType="int" parameterType="String">
+		select
+		count(TB_MEMBER_ID) from T_MEMBER_STUDY where TB_MEMBER_ID = #{memberId}
+	</select>
+
+	<select id="login" parameterType="com.com.com.erp.dto.MemberDto"
+		resultMap="memberResult">
+		SELECT TB_MEMBER_ID, 
+		TB_MEMBER_NAME, 
+		TB_MEMBER_PASSWORD, 
+		TB_ADDR_ZIPCODE, 
+		TB_ADDR1, 
+		TB_ADDR2
+		FROM
+		T_MEMBER_STUDY
+		WHERE TB_MEMBER_ID = #{memberId}
+		AND TB_MEMBER_PASSWORD = #{password}
+	</select>
+
+	<!-- <update id="updateRank" parameterType="com.com.com.erp.dto.MemberDto"> 
+		update A_MEMBER set MEMBER_RANK = #{memberRank} where MEMBER_ID = #{memberId} 
+		</update> -->
+</mapper>
